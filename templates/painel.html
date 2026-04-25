@@ -1,0 +1,1528 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>VIGILANTEX PRO — Sistema de Plantão v2</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#04070f;--panel:#070d1a;--card:#0b1225;
+  --border:#0f1e38;--b2:#162540;
+  --blue:#0088dd;--blue2:#005599;--cyan:#00ccff;
+  --silver:#b8ccd8;--silver2:#deeaf5;--dim:#4a6070;
+  --ok:#00d970;--warn:#ffbb00;--danger:#ff2244;--orange:#ff7700;--panico:#ff0033;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{font-size:16px;}
+body{background:var(--bg);color:var(--silver);font-family:'Rajdhani',sans-serif;min-height:100vh;overflow-x:hidden;-webkit-tap-highlight-color:transparent;}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,136,221,.008) 3px,rgba(0,136,221,.008) 4px);pointer-events:none;z-index:9999;}
+
+/* ===== SCREENS ===== */
+.screen{display:none;min-height:100vh;flex-direction:column;}
+.screen.active{display:flex;}
+
+/* ===== LOGIN ===== */
+#s-login{align-items:center;justify-content:center;background:radial-gradient(ellipse 80% 60% at 50% 35%,rgba(0,85,153,.2) 0%,transparent 70%),var(--bg);padding:1.5rem;}
+#s-login::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,136,221,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,136,221,.03) 1px,transparent 1px);background-size:55px 55px;pointer-events:none;}
+.login-wrap{width:100%;max-width:440px;background:var(--panel);border:1px solid var(--b2);padding:2rem 1.8rem;clip-path:polygon(0 0,calc(100% - 20px) 0,100% 20px,100% 100%,20px 100%,0 calc(100% - 20px));box-shadow:0 0 60px rgba(0,85,153,.12);position:relative;z-index:1;}
+.l-logo{text-align:center;margin-bottom:1.8rem;}
+.l-logo svg{width:58px;height:58px;filter:drop-shadow(0 0 18px rgba(0,136,221,.7));}
+.l-logo h1{font-family:'Orbitron',monospace;font-size:1.15rem;font-weight:900;color:var(--silver2);letter-spacing:3px;margin-top:.6rem;}
+.l-logo h1 span{color:var(--blue);}
+.l-logo p{font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--dim);letter-spacing:3px;margin-top:.25rem;text-transform:uppercase;}
+.role-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-bottom:1.3rem;}
+.role-btn{background:transparent;border:1px solid var(--b2);color:var(--dim);padding:9px 4px;font-family:'Share Tech Mono',monospace;font-size:.58rem;letter-spacing:1px;cursor:pointer;transition:all .2s;text-align:center;text-transform:uppercase;}
+.role-btn .ri{display:block;font-size:1.25rem;margin-bottom:3px;}
+.role-btn.sel,.role-btn:hover{border-color:var(--blue);color:var(--blue);background:rgba(0,136,221,.07);}
+.fg{display:flex;flex-direction:column;gap:4px;margin-bottom:.9rem;}
+.fl{font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--blue);letter-spacing:2px;text-transform:uppercase;}
+.fi{background:rgba(0,0,0,.5);border:1px solid var(--b2);color:var(--silver2);padding:9px 12px;font-family:'Rajdhani',sans-serif;font-size:.92rem;font-weight:600;outline:none;transition:border-color .2s;width:100%;}
+.fi:focus{border-color:var(--blue);}
+.fi option{background:var(--panel);}
+.btn-login{width:100%;background:linear-gradient(135deg,var(--blue2),var(--blue));color:#fff;border:none;padding:13px;font-family:'Orbitron',monospace;font-size:.78rem;font-weight:700;letter-spacing:3px;cursor:pointer;transition:all .3s;clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%);}
+.btn-login:hover{box-shadow:0 0 25px rgba(0,136,221,.5);}
+
+/* ===== TOPBAR ===== */
+.topbar{background:rgba(7,13,26,.97);border-bottom:1px solid var(--b2);padding:0 .8rem;height:52px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:sticky;top:0;z-index:200;backdrop-filter:blur(10px);}
+.tb-logo{font-family:'Orbitron',monospace;font-size:.78rem;font-weight:900;color:var(--silver2);letter-spacing:2px;}
+.tb-logo span{color:var(--blue);}
+.tb-right{display:flex;align-items:center;gap:.5rem;font-family:'Share Tech Mono',monospace;font-size:.62rem;}
+.tb-posto{background:rgba(0,136,221,.1);border:1px solid var(--b2);padding:3px 7px;color:var(--cyan);letter-spacing:1px;font-size:.58rem;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tb-clk{color:var(--blue);}
+.btn-sair{background:transparent;border:1px solid var(--b2);color:var(--dim);padding:4px 9px;font-family:'Share Tech Mono',monospace;font-size:.55rem;cursor:pointer;letter-spacing:1px;transition:all .2s;}
+.btn-sair:hover{border-color:var(--danger);color:var(--danger);}
+
+/* ===== BOTÃO PÂNICO ===== */
+#panic-fab{position:fixed;bottom:1rem;right:1rem;z-index:1000;width:66px;height:66px;border-radius:50%;background:linear-gradient(135deg,#990011,var(--panico));border:3px solid rgba(255,0,51,.4);color:#fff;font-size:1.6rem;cursor:pointer;box-shadow:0 0 20px rgba(255,0,51,.4);transition:all .2s;display:flex;align-items:center;justify-content:center;flex-direction:column;font-family:'Share Tech Mono',monospace;}
+#panic-fab:active{transform:scale(.9);}
+#panic-fab .pl{font-size:.42rem;letter-spacing:1px;margin-top:1px;color:rgba(255,255,255,.8);}
+#panic-fab.ativo{animation:pp .6s infinite;background:linear-gradient(135deg,#cc0011,#ff0033);}
+@keyframes pp{0%,100%{box-shadow:0 0 20px rgba(255,0,51,.4);}50%{box-shadow:0 0 60px rgba(255,0,51,1);}}
+
+/* ===== MODAL PÂNICO ===== */
+#panic-modal{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;padding:1.2rem;}
+#panic-modal.open{display:flex;}
+.panic-box{background:#100005;border:2px solid var(--panico);padding:1.8rem 1.4rem;width:100%;max-width:400px;text-align:center;box-shadow:0 0 60px rgba(255,0,51,.5);animation:mi .3s ease;}
+@keyframes mi{from{transform:scale(.8);opacity:0;}to{transform:scale(1);opacity:1;}}
+.panic-ico{font-size:2.8rem;margin-bottom:.6rem;animation:pp .8s infinite;}
+.panic-title{font-family:'Orbitron',monospace;font-size:1.2rem;font-weight:900;color:var(--panico);letter-spacing:3px;margin-bottom:.4rem;}
+.panic-sub{font-family:'Share Tech Mono',monospace;font-size:.65rem;color:rgba(255,100,100,.8);letter-spacing:2px;margin-bottom:1.2rem;}
+.panic-tipos{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:1rem;}
+.pt{background:rgba(255,0,51,.08);border:1px solid rgba(255,0,51,.3);color:rgba(255,180,180,.9);padding:9px 5px;cursor:pointer;font-size:.78rem;font-weight:700;transition:all .2s;text-transform:uppercase;letter-spacing:1px;}
+.pt:hover,.pt.sel{background:rgba(255,0,51,.2);border-color:var(--panico);color:#fff;}
+
+/* PÂNICO ATIVO — tela de cancelamento */
+#panic-ativo-painel{display:none;background:rgba(255,0,51,.1);border:2px solid var(--panico);padding:1.2rem;margin:.8rem;animation:pp 1s infinite;}
+#panic-ativo-painel.show{display:block;}
+.panic-countdown{font-family:'Orbitron',monospace;font-size:1.8rem;color:var(--panico);letter-spacing:4px;text-align:center;margin:.5rem 0;}
+
+/* ===== TABS ===== */
+.tabnav{display:flex;background:var(--panel);border-bottom:1px solid var(--border);overflow-x:auto;flex-shrink:0;}
+.tabnav::-webkit-scrollbar{height:2px;}
+.tabnav::-webkit-scrollbar-thumb{background:var(--blue2);}
+.tab-btn{background:transparent;border:none;border-bottom:2px solid transparent;color:var(--dim);padding:11px 14px;font-family:'Rajdhani',sans-serif;font-size:.8rem;font-weight:700;letter-spacing:1px;cursor:pointer;white-space:nowrap;transition:all .2s;text-transform:uppercase;display:flex;align-items:center;gap:5px;}
+.tab-btn:hover{color:var(--silver);}
+.tab-btn.active{color:var(--blue);border-bottom-color:var(--blue);background:rgba(0,136,221,.05);}
+.nb{background:var(--danger);color:#fff;font-size:.5rem;padding:1px 5px;border-radius:10px;font-family:'Share Tech Mono',monospace;}
+
+/* ===== CONTENT ===== */
+.content{flex:1;overflow-y:auto;padding-bottom:5rem;}
+.tab-pane{display:none;padding:1rem;max-width:860px;margin:0 auto;}
+.tab-pane.active{display:block;}
+
+/* ===== CARD ===== */
+.card{background:var(--card);border:1px solid var(--b2);padding:1.1rem;margin-bottom:.9rem;}
+.card-title{font-family:'Orbitron',monospace;font-size:.72rem;font-weight:700;color:var(--silver2);letter-spacing:2px;text-transform:uppercase;margin-bottom:.9rem;padding-bottom:.6rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+.card-title .ic{font-size:.95rem;}
+.card-title .actions{margin-left:auto;display:flex;gap:.4rem;}
+
+/* ===== FORM ===== */
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:.6rem;}
+.frow.f1{grid-template-columns:1fr;}
+.frow.f3{grid-template-columns:1fr 1fr 1fr;}
+@media(max-width:560px){.frow{grid-template-columns:1fr;}.frow.f3{grid-template-columns:1fr 1fr;}}
+.fld{display:flex;flex-direction:column;gap:3px;}
+.fld label{font-family:'Share Tech Mono',monospace;font-size:.56rem;color:var(--blue);letter-spacing:2px;text-transform:uppercase;}
+.fld input,.fld select,.fld textarea{background:rgba(0,0,0,.45);border:1px solid var(--b2);color:var(--silver2);padding:7px 10px;font-family:'Rajdhani',sans-serif;font-size:.9rem;font-weight:600;outline:none;transition:border-color .2s;width:100%;}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--blue);}
+.fld textarea{resize:vertical;min-height:70px;}
+.fld select option{background:var(--panel);}
+
+/* Mat grid */
+.mat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:.45rem;margin-bottom:.7rem;}
+.mat-item{background:rgba(0,0,0,.3);border:1px solid var(--b2);padding:8px 9px;display:flex;align-items:center;gap:6px;cursor:pointer;transition:all .2s;user-select:none;}
+.mat-item.on{border-color:var(--ok);background:rgba(0,217,112,.05);}
+.mat-ic{font-size:1rem;}
+.mat-nm{font-size:.78rem;font-weight:600;color:var(--silver);}
+.mat-item.on .mat-nm{color:var(--ok);}
+.mat-ck{margin-left:auto;width:13px;height:13px;border:1px solid var(--dim);display:flex;align-items:center;justify-content:center;font-size:.6rem;flex-shrink:0;}
+.mat-item.on .mat-ck{border-color:var(--ok);color:var(--ok);}
+
+/* Checklist */
+.ck-row{display:flex;flex-wrap:wrap;gap:.45rem;margin-bottom:.7rem;}
+.ck-item{background:rgba(0,0,0,.3);border:1px solid var(--b2);padding:5px 10px;display:flex;align-items:center;gap:5px;cursor:pointer;font-size:.78rem;font-weight:600;transition:all .2s;user-select:none;}
+.ck-item.on{border-color:var(--ok);color:var(--ok);background:rgba(0,217,112,.05);}
+
+/* Section label */
+.slbl{font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--blue);letter-spacing:3px;text-transform:uppercase;margin:.25rem 0 .55rem;display:flex;align-items:center;gap:7px;}
+.slbl::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--b2),transparent);}
+
+/* Urgência */
+.urg-row{display:flex;gap:.45rem;flex-wrap:wrap;margin-bottom:.7rem;}
+.urg-btn{flex:1;min-width:75px;background:transparent;border:1px solid var(--b2);color:var(--dim);padding:8px 4px;font-family:'Rajdhani',sans-serif;font-size:.78rem;font-weight:700;letter-spacing:1px;cursor:pointer;text-align:center;transition:all .2s;text-transform:uppercase;}
+.urg-btn.u1.sel{border-color:var(--ok);color:var(--ok);background:rgba(0,217,112,.07);}
+.urg-btn.u2.sel{border-color:var(--warn);color:var(--warn);background:rgba(255,187,0,.07);}
+.urg-btn.u3.sel{border-color:var(--orange);color:var(--orange);background:rgba(255,119,0,.07);}
+.urg-btn.u4.sel{border-color:var(--danger);color:var(--danger);background:rgba(255,34,68,.07);}
+
+/* Buttons */
+.btn{background:transparent;border:1px solid var(--b2);color:var(--silver);padding:8px 16px;font-family:'Orbitron',monospace;font-size:.62rem;font-weight:700;letter-spacing:2px;cursor:pointer;transition:all .2s;text-transform:uppercase;}
+.btn:hover{border-color:var(--blue);color:var(--blue);}
+.btn.pr{background:var(--blue2);border-color:var(--blue);color:#fff;}
+.btn.pr:hover{background:var(--blue);}
+.btn.ok{background:rgba(0,217,112,.1);border-color:var(--ok);color:var(--ok);}
+.btn.dn{background:rgba(255,34,68,.1);border-color:var(--danger);color:var(--danger);}
+.btn.wn{background:rgba(255,187,0,.1);border-color:var(--warn);color:var(--warn);}
+.btn.or{background:rgba(255,119,0,.1);border-color:var(--orange);color:var(--orange);}
+.btn.red{background:rgba(255,0,51,.2);border-color:var(--panico);color:var(--panico);}
+.btn.big{padding:11px 22px;font-size:.72rem;}
+.btn.sm{padding:5px 10px;font-size:.55rem;}
+.btn-row{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.9rem;}
+.btn.fw{width:100%;justify-content:center;display:flex;}
+
+/* Badge */
+.bdg{font-family:'Share Tech Mono',monospace;font-size:.56rem;padding:2px 8px;letter-spacing:2px;text-transform:uppercase;font-weight:700;display:inline-block;}
+.bdg.g{background:rgba(0,217,112,.1);color:var(--ok);border:1px solid rgba(0,217,112,.3);}
+.bdg.y{background:rgba(255,187,0,.1);color:var(--warn);border:1px solid rgba(255,187,0,.3);}
+.bdg.r{background:rgba(255,34,68,.1);color:var(--danger);border:1px solid rgba(255,34,68,.3);}
+.bdg.b{background:rgba(0,136,221,.1);color:var(--blue);border:1px solid rgba(0,136,221,.3);}
+.bdg.o{background:rgba(255,119,0,.1);color:var(--orange);border:1px solid rgba(255,119,0,.3);}
+.bdg.panic{background:rgba(255,0,51,.2);color:var(--panico);border:1px solid var(--panico);animation:pp 1s infinite;}
+
+/* Ronda */
+.ronda-wrap{display:flex;flex-direction:column;align-items:center;padding:1.2rem .5rem;text-align:center;}
+.ronda-circ{width:140px;height:140px;border-radius:50%;border:3px solid var(--b2);display:flex;align-items:center;justify-content:center;flex-direction:column;margin-bottom:1rem;transition:all .5s;}
+.ronda-circ.noposto{border-color:var(--ok);box-shadow:0 0 18px rgba(0,217,112,.2);}
+.ronda-circ.emronda{border-color:var(--warn);animation:rp 2s infinite;}
+@keyframes rp{0%,100%{box-shadow:0 0 18px rgba(255,187,0,.3);}50%{box-shadow:0 0 45px rgba(255,187,0,.6);}}
+.rc-ico{font-size:2.6rem;}
+.rc-lbl{font-family:'Orbitron',monospace;font-size:.68rem;font-weight:700;letter-spacing:2px;margin-top:4px;}
+.ronda-timer{font-family:'Share Tech Mono',monospace;font-size:1.8rem;letter-spacing:4px;margin-bottom:.35rem;}
+.ronda-timer.w{color:var(--warn);}
+.ronda-timer.g{color:var(--ok);}
+
+/* KPI */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:.6rem;margin-bottom:.9rem;}
+@media(max-width:560px){.kpis{grid-template-columns:repeat(2,1fr);}}
+.kpi{background:var(--card);border:1px solid var(--b2);padding:.8rem;text-align:center;position:relative;overflow:hidden;}
+.kpi::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;}
+.kpi.kb::after{background:var(--blue);}
+.kpi.kg::after{background:var(--ok);}
+.kpi.ky::after{background:var(--warn);}
+.kpi.kr::after{background:var(--danger);}
+.kpi-v{font-family:'Orbitron',monospace;font-size:1.6rem;font-weight:900;color:var(--silver2);}
+.kpi-v.b{color:var(--blue);}
+.kpi-v.g{color:var(--ok);}
+.kpi-v.y{color:var(--warn);}
+.kpi-v.r{color:var(--danger);}
+.kpi-l{font-family:'Share Tech Mono',monospace;font-size:.52rem;color:var(--dim);letter-spacing:2px;text-transform:uppercase;margin-top:2px;}
+
+/* Feed */
+.feed{display:flex;flex-direction:column;gap:.45rem;max-height:380px;overflow-y:auto;}
+.feed::-webkit-scrollbar{width:3px;}
+.feed::-webkit-scrollbar-thumb{background:var(--blue2);}
+.fi-item{display:flex;gap:8px;padding:8px 9px;border-left:3px solid var(--b2);font-size:.78rem;animation:fin .3s ease;}
+@keyframes fin{from{opacity:0;transform:translateX(-6px);}to{opacity:1;transform:translateX(0);}}
+.fi-item.fpass{border-left-color:var(--blue);}
+.fi-item.focorr{border-left-color:var(--danger);}
+.fi-item.fronda{border-left-color:var(--warn);}
+.fi-item.fnorm{border-left-color:var(--ok);}
+.fi-item.fpanic{border-left-color:var(--panico);background:rgba(255,0,51,.05);animation:pp .8s infinite;}
+.fi-ico{font-size:.95rem;flex-shrink:0;}
+.fi-body{flex:1;}
+.fi-txt{color:var(--silver);line-height:1.4;}
+.fi-meta{display:flex;gap:.6rem;margin-top:2px;flex-wrap:wrap;}
+.fi-tm,.fi-who,.fi-ps{font-family:'Share Tech Mono',monospace;font-size:.56rem;}
+.fi-tm{color:var(--dim);}
+.fi-who{color:var(--blue);}
+.fi-ps{color:var(--cyan);}
+
+/* Mapa */
+.mapa-wrap{position:relative;height:260px;background:var(--bg);border:1px solid var(--b2);overflow:hidden;margin-bottom:.8rem;}
+.mapa-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(0,136,221,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(0,136,221,.05) 1px,transparent 1px);background-size:30px 30px;}
+.mapa-label{position:absolute;top:.5rem;left:.7rem;font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--blue);letter-spacing:2px;}
+.mapa-clock{position:absolute;top:.5rem;right:.7rem;font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--cyan);}
+.mapa-legend{position:absolute;bottom:.5rem;left:.7rem;font-family:'Share Tech Mono',monospace;font-size:.55rem;color:var(--dim);display:flex;gap:.8rem;}
+.leg-item{display:flex;align-items:center;gap:4px;}
+.leg-dot{width:8px;height:8px;border-radius:50%;}
+/* Vigilante dot */
+.vg-dot{position:absolute;width:16px;height:16px;border-radius:50%;transform:translate(-50%,-50%);transition:left 1s ease,top 1s ease;display:flex;align-items:center;justify-content:center;font-size:.8rem;}
+.vg-dot::after{content:'';position:absolute;width:28px;height:28px;border-radius:50%;border:2px solid;opacity:.5;animation:radar 2s infinite;}
+.vg-dot.noposto{background:var(--ok);}
+.vg-dot.noposto::after{border-color:var(--ok);}
+.vg-dot.emronda{background:var(--warn);}
+.vg-dot.emronda::after{border-color:var(--warn);}
+.vg-dot.panico{background:var(--panico);}
+.vg-dot.panico::after{border-color:var(--panico);}
+@keyframes radar{0%{transform:translate(-50%,-50%) scale(1);opacity:.5;}100%{transform:translate(-50%,-50%) scale(2.5);opacity:0;}}
+.posto-fixo{position:absolute;width:10px;height:10px;background:var(--blue);clip-path:polygon(50% 0%,100% 100%,0% 100%);transform:translate(-50%,-100%);}
+.posto-label{position:absolute;font-family:'Share Tech Mono',monospace;font-size:.52rem;color:var(--blue);white-space:nowrap;transform:translateX(-50%);margin-top:4px;}
+.trilha-ponto{position:absolute;width:5px;height:5px;border-radius:50%;background:rgba(255,187,0,.4);transform:translate(-50%,-50%);}
+
+/* Posto card */
+.posto-card{background:var(--card);border:1px solid var(--b2);padding:.9rem;margin-bottom:.6rem;display:flex;align-items:center;justify-content:space-between;gap:.8rem;flex-wrap:wrap;transition:border-color .3s;}
+.posto-card:hover{border-color:var(--blue2);}
+.posto-card.panic-posto{border-color:var(--panico)!important;animation:pp .6s infinite;}
+.pc-nome{font-family:'Orbitron',monospace;font-size:.78rem;font-weight:700;color:var(--silver2);letter-spacing:1px;}
+.pc-vg{font-size:.76rem;color:var(--dim);margin-top:2px;}
+.pc-stats{display:flex;gap:.8rem;flex-wrap:wrap;}
+.pc-sv{text-align:center;}
+.pc-sv-v{font-family:'Orbitron',monospace;font-size:.9rem;font-weight:700;color:var(--silver);}
+.pc-sv-l{font-family:'Share Tech Mono',monospace;font-size:.5rem;color:var(--dim);letter-spacing:1px;}
+
+/* Empty */
+.empty{text-align:center;padding:1.8rem;color:var(--dim);}
+.empty .ei{font-size:2rem;margin-bottom:.6rem;}
+.empty p{font-family:'Share Tech Mono',monospace;font-size:.62rem;letter-spacing:2px;}
+
+/* Toast */
+#toast{position:fixed;bottom:5.2rem;right:.8rem;background:var(--card);border:1px solid var(--ok);color:var(--ok);padding:9px 14px;font-family:'Share Tech Mono',monospace;font-size:.65rem;letter-spacing:1px;z-index:1500;transform:translateY(80px);opacity:0;transition:all .3s;max-width:280px;}
+#toast.show{transform:translateY(0);opacity:1;}
+#toast.err{border-color:var(--danger);color:var(--danger);}
+#toast.wn{border-color:var(--warn);color:var(--warn);}
+#toast.panic{border-color:var(--panico);color:var(--panico);}
+
+/* Modal confirmação */
+.modal-overlay{position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;padding:1.2rem;}
+.modal-overlay.open{display:flex;}
+.modal-box{background:var(--panel);border:1px solid var(--b2);padding:1.5rem;width:100%;max-width:360px;clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px));}
+.modal-title{font-family:'Orbitron',monospace;font-size:.85rem;font-weight:700;color:var(--silver2);letter-spacing:2px;margin-bottom:1rem;padding-bottom:.7rem;border-bottom:1px solid var(--b2);}
+.modal-body{font-size:.88rem;color:var(--silver);line-height:1.5;margin-bottom:1.2rem;}
+
+/* Reiniciar warning */
+.reiniciar-box{background:rgba(255,34,68,.05);border:1px solid rgba(255,34,68,.2);padding:1rem;margin-bottom:.8rem;}
+.reiniciar-box p{font-size:.82rem;color:var(--silver);line-height:1.5;}
+.reiniciar-box strong{color:var(--danger);}
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<!-- ======== MODAL PÂNICO ======== -->
+<div id="panic-modal">
+  <div class="panic-box">
+    <div class="panic-ico">🆘</div>
+    <div class="panic-title">ALERTA DE PÂNICO</div>
+    <div class="panic-sub">// SELECIONE O TIPO DE EMERGÊNCIA //</div>
+    <div class="panic-tipos">
+      <div class="pt" onclick="selPanic(this,'Ameaça armada')">🔫 AMEAÇA ARMADA</div>
+      <div class="pt" onclick="selPanic(this,'Invasão em curso')">🚨 INVASÃO</div>
+      <div class="pt" onclick="selPanic(this,'Agressão física')">👊 AGRESSÃO</div>
+      <div class="pt" onclick="selPanic(this,'Emergência médica')">🏥 EMERGÊNCIA MÉD.</div>
+      <div class="pt" onclick="selPanic(this,'Incêndio / Fumaça')">🔥 INCÊNDIO</div>
+      <div class="pt" onclick="selPanic(this,'Preciso de apoio urgente')">📡 APOIO URGENTE</div>
+    </div>
+    <button class="btn dn fw big" onclick="confirmarPanico()" style="margin-bottom:.7rem">🆘 ENVIAR ALERTA SILENCIOSO</button>
+    <button class="btn fw" onclick="fecharPanic()">✕ CANCELAR</button>
+  </div>
+</div>
+
+<!-- ======== MODAL REINICIAR ======== -->
+<div id="modal-reiniciar" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-title">⚠ REINICIAR PLANTÃO</div>
+    <div class="reiniciar-box">
+      <p>Esta ação irá <strong>apagar todos os registros</strong> deste plantão:<br><br>
+      • Passagens de serviço<br>
+      • Ocorrências registradas<br>
+      • Histórico de rondas<br>
+      • Alertas de pânico<br><br>
+      <strong>Esta ação não pode ser desfeita.</strong><br>
+      Exporte o relatório PDF antes de continuar.</p>
+    </div>
+    <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+      <button class="btn dn big" onclick="confirmarReiniciar()">🗑 SIM, REINICIAR</button>
+      <button class="btn fw" onclick="fecharReiniciar()">✕ CANCELAR</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======== LOGIN ======== -->
+<div id="s-login" class="screen active">
+  <div class="login-wrap">
+    <div class="l-logo">
+      <svg viewBox="0 0 60 68">
+        <path d="M30 3L57 16L57 41C57 55 30 65 30 65C30 65 3 55 3 41L3 16Z" fill="none" stroke="#b8ccd8" stroke-width="1.5"/>
+        <path d="M30 10L51 21L51 40C51 53 30 62 30 62C30 62 9 53 9 40L9 21Z" fill="rgba(0,85,153,.1)" stroke="#005599" stroke-width=".8"/>
+        <path d="M19 17L30 51L41 17" fill="none" stroke="#b8ccd8" stroke-width="3" stroke-linecap="round"/>
+        <line x1="35" y1="17" x2="30" y2="51" stroke="#0088dd" stroke-width="2"/>
+        <circle cx="30" cy="35" r="3" fill="#0088dd"/>
+      </svg>
+      <h1>VIGILANTEX<span> PRO</span></h1>
+      <p>Sistema de Gestão de Plantão · v2026</p>
+    </div>
+    <div class="role-grid">
+      <button class="role-btn sel" onclick="setRole(this,'vigilante')"><span class="ri">👮</span>VIGILANTE</button>
+      <button class="role-btn" onclick="setRole(this,'supervisor')"><span class="ri">🧑‍💼</span>SUPERVISOR</button>
+      <button class="role-btn" onclick="setRole(this,'gestor')"><span class="ri">🏢</span>GESTOR</button>
+    </div>
+    <div class="fg">
+      <label class="fl">// Nome + Matrícula</label>
+      <input class="fi" id="l-nome" type="text" placeholder="Ex: João Silva — Mat. 0042">
+    </div>
+    <div class="fg" id="l-pg">
+      <label class="fl">// Posto de Trabalho</label>
+      <input class="fi" id="l-posto" type="text" placeholder="Ex: Portaria Principal, Bloco A, Gate 2...">
+    </div>
+    <div class="fg" id="l-tg">
+      <label class="fl">// Turno</label>
+      <select class="fi" id="l-turno">
+        <option>Diurno — 07h às 19h</option>
+        <option>Noturno — 19h às 07h</option>
+        <option>Plantão 12h — Manhã</option>
+        <option>Plantão 12h — Noite</option>
+        <option>24 Horas</option>
+      </select>
+    </div>
+    <button class="btn-login" onclick="login()">[ ENTRAR NO SISTEMA ]</button>
+  </div>
+</div>
+
+<!-- ======== TELA VIGILANTE ======== -->
+<div id="s-vig" class="screen">
+  <div class="topbar">
+    <div class="tb-logo">VIG<span>ILANTEX</span></div>
+    <div class="tb-right">
+      <span class="tb-posto" id="vg-posto">POSTO</span>
+      <span class="tb-clk" id="vg-clk">00:00:00</span>
+      <button class="btn-sair" onclick="logout()">SAIR</button>
+    </div>
+  </div>
+
+  <!-- Banner pânico ativo -->
+  <div id="panic-ativo-painel">
+    <div style="font-family:'Orbitron',monospace;font-size:.85rem;color:var(--panico);letter-spacing:2px;text-align:center;margin-bottom:.5rem">🆘 ALERTA DE PÂNICO ATIVO</div>
+    <div class="panic-countdown" id="panic-cd">00:00</div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:.62rem;color:rgba(255,150,150,.8);text-align:center;letter-spacing:1px;margin-bottom:.8rem" id="panic-tipo-label">Tipo: —</div>
+    <div style="display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap">
+      <button class="btn red" onclick="cancelarPanico()">✕ CANCELAR PÂNICO (FALSO ALARME)</button>
+    </div>
+  </div>
+
+  <div class="tabnav">
+    <button class="tab-btn active" onclick="vtab(this,'passagem')">📋 Passagem</button>
+    <button class="tab-btn" onclick="vtab(this,'ocorrencia')">🚨 Ocorrência <span class="nb" id="vg-oc-n" style="display:none">0</span></button>
+    <button class="tab-btn" onclick="vtab(this,'ronda')">🚶 Ronda</button>
+    <button class="tab-btn" onclick="vtab(this,'mapa')">🗺 Mapa</button>
+    <button class="tab-btn" onclick="vtab(this,'livro')">📖 Livro</button>
+  </div>
+
+  <div class="content">
+
+    <!-- PASSAGEM -->
+    <div class="tab-pane active" id="vg-passagem">
+      <div class="card">
+        <div class="card-title">
+          <span class="ic">📋</span> PASSAGEM DE SERVIÇO
+          <div class="actions">
+            <button class="btn sm wn" onclick="abrirReiniciar()">↺ REINICIAR</button>
+          </div>
+        </div>
+
+        <div class="slbl">Identificação do Plantão</div>
+        <div class="frow f3">
+          <div class="fld"><label>Data</label><input type="date" id="ps-dt"></div>
+          <div class="fld"><label>Hora Entrada</label><input type="time" id="ps-hr"></div>
+          <div class="fld"><label>Matrícula</label><input type="text" id="ps-mat" placeholder="Ex: 0042"></div>
+        </div>
+        <div class="frow">
+          <div class="fld"><label>Vigilante que PASSOU</label><input type="text" id="ps-passou" placeholder="Nome + matrícula"></div>
+          <div class="fld"><label>Vigilante que RECEBEU</label><input type="text" id="ps-recebeu" readonly style="opacity:.6"></div>
+        </div>
+
+        <div class="slbl">Armamento</div>
+        <div class="frow f3">
+          <div class="fld"><label>Tipo de Arma</label>
+            <select id="ps-arm">
+              <option value="">Selecione...</option>
+              <option>Revólver .38</option><option>Pistola .380</option>
+              <option>Pistola .40</option><option>Espingarda 12</option>
+              <option>Nenhuma (desarmado)</option>
+            </select>
+          </div>
+          <div class="fld"><label>Nº Registro PF</label><input type="text" id="ps-arm-nr" placeholder="Ex: AC-001234"></div>
+          <div class="fld"><label>Qtd. Munição</label><input type="number" id="ps-mun" placeholder="0" min="0"></div>
+        </div>
+        <div class="frow">
+          <div class="fld"><label>Condição da Arma</label>
+            <select id="ps-arm-cond">
+              <option>Perfeita — sem avarias</option>
+              <option>Pequena avaria — reportada</option>
+              <option>Requer manutenção</option>
+              <option>Não recebeu armamento</option>
+            </select>
+          </div>
+          <div class="fld"><label>Colete Balístico</label>
+            <select id="ps-colete">
+              <option>Sim — boas condições</option>
+              <option>Sim — com avaria</option>
+              <option>Não recebeu colete</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="slbl">Material e Carga</div>
+        <div class="mat-grid">
+          <div class="mat-item" onclick="toggleMat(this)"><span class="mat-ic">📻</span><span class="mat-nm">Rádio HT</span><span class="mat-ck">✓</span></div>
+          <div class="mat-item" onclick="toggleMat(this)"><span class="mat-ic">🔦</span><span class="mat-nm">Lanterna</span><span class="mat-ck">✓</span></div>
+          <div class="mat-item" onclick="toggleMat(this)"><span class="mat-ic">🔑</span><span class="mat-nm">Chaves do Posto</span><span class="mat-ck">✓</span></div>
+          <div class="mat-item" onclick="toggleMat(this)"><span class="mat-ic">📋</span><span class="mat-nm">Livro Ocorrências</span><span class="mat-ck">✓</span></div>
+          <div class="mat-item" onclick="toggleMat(this)"><span class="mat-ic">🚨</span><span class="mat-nm">Controle Alarme</span><span class="mat-ck">✓</span></div>
+          <div class="mat-item" onclick="toggleMat(this)"><span class="mat-ic">🧰</span><span class="mat-nm">Kit 1º Socorros</span><span class="mat-ck">✓</span></div>
+          <div class="mat-item" onclick="toggleMat(this)"><span class="mat-ic">🌂</span><span class="mat-nm">Capa de Chuva</span><span class="mat-ck">✓</span></div>
+          <div class="mat-item" onclick="toggleMat(this)"><span class="mat-ic">📱</span><span class="mat-nm">Celular do Posto</span><span class="mat-ck">✓</span></div>
+        </div>
+
+        <div class="slbl">Verificação do Posto</div>
+        <div class="ck-row" id="ck-posto">
+          <span class="ck-item" onclick="toggleCk(this)">📷 Câmeras OK</span>
+          <span class="ck-item" onclick="toggleCk(this)">🔔 Alarme OK</span>
+          <span class="ck-item" onclick="toggleCk(this)">💡 Iluminação OK</span>
+          <span class="ck-item" onclick="toggleCk(this)">🔒 Portões OK</span>
+          <span class="ck-item" onclick="toggleCk(this)">☎️ Telefone OK</span>
+          <span class="ck-item" onclick="toggleCk(this)">🔥 Extintor Válido</span>
+          <span class="ck-item" onclick="toggleCk(this)">📡 Rádio OK</span>
+          <span class="ck-item" onclick="toggleCk(this)">🖥️ Monitores OK</span>
+        </div>
+
+        <div class="slbl">Veículo do Posto</div>
+        <div class="frow f3">
+          <div class="fld"><label>Placa</label><input type="text" id="ps-placa" placeholder="ABC-1234"></div>
+          <div class="fld"><label>KM Recebimento</label><input type="number" id="ps-km" placeholder="0"></div>
+          <div class="fld"><label>Condição</label>
+            <select id="ps-vei">
+              <option>Sem veículo no posto</option>
+              <option>Boas condições</option>
+              <option>Com avaria — reportada</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="slbl">Ordens em Vigor / Pendências</div>
+        <div class="frow f1">
+          <div class="fld">
+            <label>Observações da passagem</label>
+            <textarea id="ps-obs" placeholder="Registre ordens em vigor, pendências e informações importantes para este plantão..."></textarea>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn pr big" onclick="regPassagem()">✓ REGISTRAR PASSAGEM</button>
+          <button class="btn" onclick="limparPassagem()">↺ LIMPAR</button>
+        </div>
+      </div>
+
+      <div class="card" id="hist-pas-card" style="display:none">
+        <div class="card-title"><span class="ic">📂</span> PASSAGENS REGISTRADAS</div>
+        <div id="lista-pas"></div>
+      </div>
+    </div>
+
+    <!-- OCORRÊNCIA -->
+    <div class="tab-pane" id="vg-ocorrencia">
+      <div class="card">
+        <div class="card-title">
+          <span class="ic">🚨</span> REGISTRAR OCORRÊNCIA
+          <div class="actions">
+            <button class="btn sm" onclick="limparOcorrencia()">↺ LIMPAR</button>
+          </div>
+        </div>
+
+        <div class="slbl">Urgência</div>
+        <div class="urg-row">
+          <button class="urg-btn u1" onclick="selUrg(this,'baixa')">🟢 BAIXA</button>
+          <button class="urg-btn u2" onclick="selUrg(this,'media')">🟡 MÉDIA</button>
+          <button class="urg-btn u3" onclick="selUrg(this,'alta')">🟠 ALTA</button>
+          <button class="urg-btn u4" onclick="selUrg(this,'critica')">🔴 CRÍTICA</button>
+        </div>
+        <div class="frow">
+          <div class="fld"><label>Tipo</label>
+            <select id="oc-tipo">
+              <option value="">Selecione...</option>
+              <option>Pessoa suspeita</option><option>Tentativa de invasão</option>
+              <option>Invasão confirmada</option><option>Furto / Roubo</option>
+              <option>Briga / Conflito</option><option>Acidente / Queda</option>
+              <option>Emergência médica</option><option>Incêndio / Fumaça</option>
+              <option>Veículo suspeito</option><option>Alarme disparado</option>
+              <option>Dano ao patrimônio</option><option>Outros</option>
+            </select>
+          </div>
+          <div class="fld"><label>Local Exato</label><input type="text" id="oc-local" placeholder="Ex: Portão 2..."></div>
+        </div>
+        <div class="frow f1">
+          <div class="fld"><label>Descrição (O quê, Quem, Como, Quando)</label>
+            <textarea id="oc-desc" style="min-height:85px" placeholder="Descreva com o máximo de detalhes..."></textarea>
+          </div>
+        </div>
+        <div class="frow">
+          <div class="fld"><label>Providências Tomadas</label>
+            <textarea id="oc-prov" placeholder="O que você fez?"></textarea>
+          </div>
+          <div class="fld"><label>Envolvidos / Placas</label>
+            <textarea id="oc-env" placeholder="Descrição de pessoas, veículos..."></textarea>
+          </div>
+        </div>
+        <div class="frow">
+          <div class="fld"><label>Autoridade Acionada</label>
+            <select id="oc-autor">
+              <option>Nenhuma acionada</option>
+              <option>Polícia Militar — 190</option>
+              <option>Polícia Civil</option>
+              <option>SAMU — 192</option>
+              <option>Bombeiros — 193</option>
+              <option>Supervisor da empresa</option>
+            </select>
+          </div>
+          <div class="fld"><label>Nº B.O. / Protocolo</label>
+            <input type="text" id="oc-bo" placeholder="Ex: BO 2026/0042">
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn dn big" onclick="regOcorr()">🚨 REGISTRAR</button>
+          <button class="btn wn big" onclick="regOcorr('urgente')">⚡ NOTIFICAR SUPERVISOR</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="ic">📂</span> OCORRÊNCIAS DESTE PLANTÃO</div>
+        <div id="lista-oc"><div class="empty"><div class="ei">📋</div><p>Nenhuma ocorrência</p></div></div>
+      </div>
+    </div>
+
+    <!-- RONDA -->
+    <div class="tab-pane" id="vg-ronda">
+      <div class="card">
+        <div class="card-title"><span class="ic">🚶</span> CONTROLE DE RONDA</div>
+        <div class="ronda-wrap">
+          <div class="ronda-circ noposto" id="rc">
+            <div class="rc-ico" id="rc-ico">🏠</div>
+            <div class="rc-lbl" id="rc-lbl" style="color:var(--ok)">NO POSTO</div>
+          </div>
+          <div class="ronda-timer g" id="rc-timer">00:00:00</div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:.62rem;color:var(--dim);margin-bottom:1rem" id="rc-sub">Pronto para iniciar ronda</div>
+          <div style="display:flex;gap:.7rem;flex-wrap:wrap;justify-content:center">
+            <button class="btn wn big" id="btn-ir" onclick="iniciarRonda()">🚶 INICIAR RONDA</button>
+            <button class="btn ok big" id="btn-vt" onclick="finalizarRonda()" style="display:none">✓ VOLTEI AO POSTO</button>
+          </div>
+        </div>
+
+        <div class="slbl">Pontos de Verificação</div>
+        <div class="ck-row" id="ck-ronda">
+          <span class="ck-item" onclick="toggleCk(this)">🚪 Portão Principal</span>
+          <span class="ck-item" onclick="toggleCk(this)">🚪 Portão Fundos</span>
+          <span class="ck-item" onclick="toggleCk(this)">🅿️ Estacionamento</span>
+          <span class="ck-item" onclick="toggleCk(this)">🌳 Perímetro Externo</span>
+          <span class="ck-item" onclick="toggleCk(this)">🏭 Área de Serviço</span>
+          <span class="ck-item" onclick="toggleCk(this)">🏗️ Cobertura</span>
+          <span class="ck-item" onclick="toggleCk(this)">📺 Sala de Câmeras</span>
+          <span class="ck-item" onclick="toggleCk(this)">⚡ Gerador</span>
+          <span class="ck-item" onclick="toggleCk(this)">💧 Reservatório</span>
+          <span class="ck-item" onclick="toggleCk(this)">🚒 Extintores</span>
+        </div>
+        <div class="fld" style="margin-bottom:.7rem">
+          <label>Observações / Irregularidades</label>
+          <textarea id="ronda-obs" placeholder="Anote tudo que estiver fora do normal..."></textarea>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="ic">📂</span> HISTÓRICO DE RONDAS</div>
+        <div id="lista-rondas"><div class="empty"><div class="ei">🚶</div><p>Nenhuma ronda realizada</p></div></div>
+      </div>
+    </div>
+
+    <!-- MAPA -->
+    <div class="tab-pane" id="vg-mapa">
+      <div class="card">
+        <div class="card-title">
+          <span class="ic">🗺</span> MAPA DE POSICIONAMENTO EM TEMPO REAL
+          <div class="actions">
+            <button class="btn sm" onclick="limparTrilha()">↺ LIMPAR TRILHA</button>
+          </div>
+        </div>
+
+        <div class="mapa-wrap" id="mapa-wrap">
+          <div class="mapa-grid"></div>
+          <div class="mapa-label" id="mapa-label">📍 POSTO</div>
+          <div class="mapa-clock" id="mapa-clock">00:00:00</div>
+          <!-- Posto fixo -->
+          <div class="posto-fixo" id="mapa-posto-fixo" style="left:50%;top:50%"></div>
+          <div class="posto-label" id="mapa-posto-label" style="left:50%;top:calc(50% + 14px)">POSTO</div>
+          <!-- Trilha -->
+          <div id="mapa-trilha"></div>
+          <!-- Vigilante -->
+          <div class="vg-dot noposto" id="vg-dot" style="left:50%;top:50%">👮</div>
+          <div class="mapa-legend">
+            <div class="leg-item"><div class="leg-dot" style="background:var(--ok)"></div>No Posto</div>
+            <div class="leg-item"><div class="leg-dot" style="background:var(--warn)"></div>Em Ronda</div>
+            <div class="leg-item"><div class="leg-dot" style="background:var(--panico)"></div>Pânico</div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.7rem;font-family:'Share Tech Mono',monospace;font-size:.65rem">
+          <div style="background:rgba(0,0,0,.3);border:1px solid var(--b2);padding:.8rem">
+            <div style="color:var(--dim);letter-spacing:2px;font-size:.55rem;margin-bottom:.3rem">STATUS ATUAL</div>
+            <div id="mapa-status-txt" style="color:var(--ok)">🏠 NO POSTO</div>
+          </div>
+          <div style="background:rgba(0,0,0,.3);border:1px solid var(--b2);padding:.8rem">
+            <div style="color:var(--dim);letter-spacing:2px;font-size:.55rem;margin-bottom:.3rem">ÚLTIMA RONDA</div>
+            <div id="mapa-ultima-ronda" style="color:var(--dim)">—</div>
+          </div>
+          <div style="background:rgba(0,0,0,.3);border:1px solid var(--b2);padding:.8rem">
+            <div style="color:var(--dim);letter-spacing:2px;font-size:.55rem;margin-bottom:.3rem">RONDAS HOJE</div>
+            <div id="mapa-n-rondas" style="color:var(--blue)">0</div>
+          </div>
+          <div style="background:rgba(0,0,0,.3);border:1px solid var(--b2);padding:.8rem">
+            <div style="color:var(--dim);letter-spacing:2px;font-size:.55rem;margin-bottom:.3rem">OCORRÊNCIAS</div>
+            <div id="mapa-n-ocorr" style="color:var(--danger)">0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIVRO -->
+    <div class="tab-pane" id="vg-livro">
+      <div class="card">
+        <div class="card-title">
+          <span class="ic">📖</span> LIVRO DIGITAL
+          <div class="actions">
+            <button class="btn sm wn" onclick="abrirReiniciar()">↺ REINICIAR</button>
+          </div>
+        </div>
+        <div id="livro-header" style="font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--blue);letter-spacing:1px;padding:.7rem;border:1px solid var(--b2);text-align:center;margin-bottom:.8rem;background:rgba(0,136,221,.03);white-space:pre-wrap;line-height:1.7">
+[ LIVRO VAZIO — REGISTRE A PASSAGEM PARA INICIAR ]
+        </div>
+        <div id="livro-corpo"></div>
+        <div class="btn-row" style="margin-top:.9rem">
+          <button class="btn pr big" onclick="exportarPDF()">📄 EXPORTAR RELATÓRIO PDF</button>
+          <button class="btn ok" onclick="encerrarPlantao()">🔒 ENCERRAR PLANTÃO</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+
+  <!-- BOTÃO PÂNICO FLUTUANTE -->
+  <button id="panic-fab" onclick="abrirPanic()">
+    🆘<span class="pl">PÂNICO</span>
+  </button>
+</div>
+
+<!-- ======== TELA SUPERVISOR / GESTOR ======== -->
+<div id="s-sup" class="screen">
+  <div class="topbar">
+    <div class="tb-logo">VIG<span>ILANTEX</span> <span id="sup-role" style="color:var(--warn);font-size:.62rem;margin-left:5px">SUPERVISOR</span></div>
+    <div class="tb-right">
+      <span style="font-family:'Share Tech Mono',monospace;font-size:.62rem;color:var(--silver)" id="sup-nome">—</span>
+      <span class="tb-clk" id="sup-clk">00:00:00</span>
+      <button class="btn-sair" onclick="logout()">SAIR</button>
+    </div>
+  </div>
+
+  <div class="tabnav">
+    <button class="tab-btn active" onclick="stab(this,'realtime')">📡 Ao Vivo</button>
+    <button class="tab-btn" onclick="stab(this,'mapa')">🗺 Mapa</button>
+    <button class="tab-btn" onclick="stab(this,'postos')">📍 Postos</button>
+    <button class="tab-btn" onclick="stab(this,'ocorrs')">🚨 Ocorrências <span class="nb" id="sup-oc-n">0</span></button>
+    <button class="tab-btn" onclick="stab(this,'panicos')">🆘 Pânicos <span class="nb" id="sup-pan-n" style="display:none">0</span></button>
+    <button class="tab-btn" onclick="stab(this,'relatorio')">📊 Relatório</button>
+  </div>
+
+  <div class="content">
+
+    <!-- AO VIVO -->
+    <div class="tab-pane active" id="sv-realtime">
+      <div class="kpis">
+        <div class="kpi kb"><div class="kpi-v b" id="kp-postos">0</div><div class="kpi-l">Postos Ativos</div></div>
+        <div class="kpi kg"><div class="kpi-v g" id="kp-noposto">0</div><div class="kpi-l">No Posto</div></div>
+        <div class="kpi ky"><div class="kpi-v y" id="kp-ronda">0</div><div class="kpi-l">Em Ronda</div></div>
+        <div class="kpi kr"><div class="kpi-v r" id="kp-ocorr">0</div><div class="kpi-l">Ocorrências</div></div>
+      </div>
+
+      <!-- Alerta pânico supervisor -->
+      <div id="sup-panic-alerta" style="display:none;background:rgba(255,0,51,.12);border:2px solid var(--panico);padding:1rem;margin-bottom:1rem;animation:pp .6s infinite">
+        <div style="font-family:'Orbitron',monospace;font-size:.88rem;color:var(--panico);letter-spacing:2px;margin-bottom:.4rem">🆘 ALERTA DE PÂNICO RECEBIDO!</div>
+        <div id="sup-panic-det" style="font-family:'Share Tech Mono',monospace;font-size:.68rem;color:rgba(255,150,150,.9);line-height:1.8"></div>
+        <div style="display:flex;gap:.6rem;margin-top:.7rem;flex-wrap:wrap">
+          <button class="btn ok" onclick="atenderPanico()">✓ CONFIRMAR ATENDIMENTO</button>
+          <button class="btn" onclick="byId('sup-panic-alerta').style.display='none'">✕ MINIMIZAR</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span class="ic">📡</span> FEED EM TEMPO REAL
+          <span style="margin-left:auto;font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--ok)">● AO VIVO</span>
+        </div>
+        <div class="feed" id="sv-feed"><div class="empty"><div class="ei">📡</div><p>Aguardando vigilantes...</p></div></div>
+      </div>
+    </div>
+
+    <!-- MAPA SUPERVISOR -->
+    <div class="tab-pane" id="sv-mapa">
+      <div class="card">
+        <div class="card-title"><span class="ic">🗺</span> MAPA OPERACIONAL EM TEMPO REAL</div>
+        <div class="mapa-wrap" id="mapa-wrap-sv">
+          <div class="mapa-grid"></div>
+          <div class="mapa-label" id="mapa-sv-label">📍 MONITORAMENTO</div>
+          <div class="mapa-clock" id="mapa-sv-clock">00:00:00</div>
+          <div class="posto-fixo" style="left:50%;top:50%"></div>
+          <div class="posto-label" id="mapa-sv-posto" style="left:50%;top:calc(50% + 14px)">POSTO</div>
+          <div id="mapa-sv-trilha"></div>
+          <div class="vg-dot noposto" id="sv-dot" style="left:50%;top:50%">👮</div>
+          <div class="mapa-legend">
+            <div class="leg-item"><div class="leg-dot" style="background:var(--ok)"></div>No Posto</div>
+            <div class="leg-item"><div class="leg-dot" style="background:var(--warn)"></div>Em Ronda</div>
+            <div class="leg-item"><div class="leg-dot" style="background:var(--panico)"></div>Pânico</div>
+          </div>
+        </div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:.65rem;display:flex;gap:.7rem;flex-wrap:wrap;margin-top:.5rem">
+          <span>Status: <strong id="sv-status-mapa" style="color:var(--ok)">NO POSTO</strong></span>
+          <span>Rondas: <strong id="sv-rondas-mapa" style="color:var(--blue)">0</strong></span>
+          <span>Ocorrências: <strong id="sv-ocorr-mapa" style="color:var(--danger)">0</strong></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- POSTOS -->
+    <div class="tab-pane" id="sv-postos">
+      <div class="card">
+        <div class="card-title"><span class="ic">📍</span> STATUS DOS POSTOS</div>
+        <div id="lista-postos"><div class="empty"><div class="ei">📍</div><p>Nenhum posto ativo</p></div></div>
+      </div>
+    </div>
+
+    <!-- OCORRÊNCIAS -->
+    <div class="tab-pane" id="sv-ocorrs">
+      <div class="card">
+        <div class="card-title"><span class="ic">🚨</span> TODAS AS OCORRÊNCIAS</div>
+        <div id="sv-lista-oc"><div class="empty"><div class="ei">🚨</div><p>Sem ocorrências</p></div></div>
+      </div>
+    </div>
+
+    <!-- PÂNICOS -->
+    <div class="tab-pane" id="sv-panicos">
+      <div class="card">
+        <div class="card-title"><span class="ic">🆘</span> HISTÓRICO DE ALERTAS DE PÂNICO</div>
+        <div id="lista-panicos"><div class="empty"><div class="ei">🆘</div><p>Nenhum alerta registrado</p></div></div>
+      </div>
+    </div>
+
+    <!-- RELATÓRIO -->
+    <div class="tab-pane" id="sv-relatorio">
+      <div class="card">
+        <div class="card-title"><span class="ic">📊</span> RESUMO DO TURNO</div>
+        <div class="kpis">
+          <div class="kpi kb"><div class="kpi-v b" id="r-pas">0</div><div class="kpi-l">Passagens</div></div>
+          <div class="kpi kg"><div class="kpi-v g" id="r-ron">0</div><div class="kpi-l">Rondas</div></div>
+          <div class="kpi kr"><div class="kpi-v r" id="r-oc">0</div><div class="kpi-l">Ocorrências</div></div>
+          <div class="kpi ky"><div class="kpi-v y" id="r-pan">0</div><div class="kpi-l">Pânicos</div></div>
+        </div>
+        <div class="slbl">Log Completo</div>
+        <div class="feed" id="sv-log-full" style="max-height:500px">
+          <div class="empty"><div class="ei">📊</div><p>Sem registros</p></div>
+        </div>
+        <div class="btn-row" style="margin-top:.9rem">
+          <button class="btn pr fw big" onclick="exportarPDF()">📄 EXPORTAR RELATÓRIO COMPLETO EM PDF</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// =====================================================
+// DB
+// =====================================================
+const DB={
+  user:{nome:'',role:'vigilante',posto:'',turno:'',mat:''},
+  passagens:[],ocorrencias:[],rondas:[],panicos:[],feed:[],
+  rondaAtiva:false,rondaInicio:null,rondaInt:null,
+  panicAtivo:false,panicTipo:'',panicInt:null,panicSegundos:0,
+  plantaoInicio:null,
+  mapaPos:{x:50,y:50},mapaTrilha:[],mapaInt:null,
+};
+let roleAtual='vigilante';
+let panicTipoSel='';
+
+// =====================================================
+// LOGIN
+// =====================================================
+function setRole(btn,r){
+  document.querySelectorAll('.role-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel'); roleAtual=r;
+  byId('l-pg').style.display=r==='gestor'?'none':'';
+  byId('l-tg').style.display=r==='gestor'?'none':'';
+}
+function login(){
+  const nome=byId('l-nome').value.trim();
+  const posto=(byId('l-posto')?.value||'').trim()||'Posto não informado';
+  const turno=byId('l-turno')?.value||'';
+  if(!nome){toast('Informe seu nome','err');return;}
+  if(roleAtual!=='gestor'&&!nome){toast('Informe seu nome','err');return;}
+  const m=nome.match(/[Mm]at\.?\s*(\w+)/);
+  DB.user={nome:nome.split('—')[0].trim(),role:roleAtual,posto,turno,mat:m?.[1]||''};
+  hideAll();
+  if(roleAtual==='vigilante'){iniciarVigilante();}
+  else{iniciarSupervisor();}
+  toast(`Bem-vindo(a), ${DB.user.nome}!`);
+}
+function logout(){
+  if(DB.rondaAtiva)finalizarRonda();
+  if(DB.panicAtivo)cancelarPanico();
+  clearInterval(DB.mapaInt);
+  hideAll();show('s-login');
+  byId('l-nome').value='';
+  toast('Sessão encerrada','wn');
+}
+
+// =====================================================
+// VIGILANTE INIT
+// =====================================================
+function iniciarVigilante(){
+  show('s-vig');
+  byId('vg-posto').textContent=DB.user.posto.split('—')[0].trim();
+  byId('ps-recebeu').value=DB.user.nome+(DB.user.mat?' — Mat. '+DB.user.mat:'');
+  clockStart('vg-clk');
+  preencherDT();
+  DB.plantaoInicio=DB.plantaoInicio||new Date();
+  iniciarMapa();
+  pushFeed('fnorm','🟢',`${DB.user.nome} iniciou sessão no posto`,DB.user.posto,'passagem');
+}
+
+// =====================================================
+// SUPERVISOR INIT
+// =====================================================
+function iniciarSupervisor(){
+  show('s-sup');
+  byId('sup-nome').textContent=DB.user.nome.toUpperCase();
+  byId('sup-role').textContent=DB.user.role==='gestor'?'GESTOR':'SUPERVISOR';
+  clockStart('sup-clk');
+  if(!DB.feed.length)pushFeed('fnorm','🖥️','Sistema VIGILANTEX PRO iniciado','Sistema','sistema');
+  atualizarSup();
+  setInterval(atualizarSup,4000);
+}
+
+// =====================================================
+// UTILS
+// =====================================================
+function byId(id){return document.getElementById(id);}
+function show(id){byId(id).classList.add('active');}
+function hideAll(){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));}
+function clockStart(id){setInterval(()=>{const e=byId(id);if(e)e.textContent=new Date().toLocaleTimeString('pt-BR');},1000);}
+function preencherDT(){const n=new Date();const d=byId('ps-dt');if(d)d.value=n.toISOString().split('T')[0];const h=byId('ps-hr');if(h)h.value=n.toTimeString().slice(0,5);}
+function now(){return new Date().toLocaleTimeString('pt-BR');}
+function hoje(){return new Date().toLocaleDateString('pt-BR');}
+function ts(){return new Date().toLocaleString('pt-BR');}
+function toggleMat(el){el.classList.toggle('on');}
+function toggleCk(el){el.classList.toggle('on');}
+function selUrg(btn,nivel){document.querySelectorAll('.urg-btn').forEach(b=>b.classList.remove('sel'));btn.classList.add('sel');btn.dataset.nivel=nivel;}
+
+// =====================================================
+// TABS
+// =====================================================
+function vtab(btn,name){
+  byId('s-vig').querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  byId('s-vig').querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');byId('vg-'+name).classList.add('active');
+  if(name==='livro')atualizarLivro();
+  if(name==='mapa')atualizarMapaVG();
+}
+function stab(btn,name){
+  byId('s-sup').querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  byId('s-sup').querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');byId('sv-'+name).classList.add('active');
+  atualizarSup();
+  if(name==='relatorio'){byId('r-pas').textContent=DB.passagens.length;byId('r-ron').textContent=DB.rondas.length;byId('r-oc').textContent=DB.ocorrencias.length;byId('r-pan').textContent=DB.panicos.length;}
+}
+
+// =====================================================
+// PASSAGEM
+// =====================================================
+function regPassagem(){
+  const dt=byId('ps-dt').value,hr=byId('ps-hr').value,passou=byId('ps-passou').value.trim();
+  if(!dt||!hr){toast('Informe data e hora','err');return;}
+  if(!passou){toast('Informe quem passou o serviço','err');return;}
+  const arm=byId('ps-arm').value,armNr=byId('ps-arm-nr').value.trim(),mun=byId('ps-mun').value;
+  const colete=byId('ps-colete').value,armCond=byId('ps-arm-cond').value;
+  const placa=byId('ps-placa').value.trim(),km=byId('ps-km').value,obs=byId('ps-obs').value.trim();
+  const materiais=[...document.querySelectorAll('.mat-item.on')].map(m=>m.querySelector('.mat-nm').textContent);
+  const verifs=[...document.querySelectorAll('#ck-posto .ck-item.on')].map(c=>c.textContent.trim());
+  const reg={id:Date.now(),dt,hr,passou,arm,armNr,mun,colete,armCond,placa,km,obs,materiais,verifs,vigilante:DB.user.nome,posto:DB.user.posto,horaReg:now(),dataReg:hoje()};
+  DB.passagens.push(reg);
+  DB.plantaoInicio=DB.plantaoInicio||new Date();
+  pushFeed('fpass','📋',`PASSAGEM: ${passou} → ${DB.user.nome} | Arma: ${arm||'Desarmado'} | ${materiais.length} itens`,DB.user.posto,'passagem');
+  renderPassagens();
+  byId('hist-pas-card').style.display='';
+  limparPassagem();
+  toast('✓ Passagem registrada!');
+}
+
+function renderPassagens(){
+  const el=byId('lista-pas');
+  if(!DB.passagens.length){el.innerHTML='<div class="empty"><div class="ei">📋</div><p>Sem passagens</p></div>';return;}
+  el.innerHTML=DB.passagens.slice().reverse().map(p=>`
+    <div style="border:1px solid var(--b2);padding:.9rem;margin-bottom:.6rem;border-left:3px solid var(--blue)">
+      <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:.3rem;margin-bottom:.4rem">
+        <span style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--silver2)">${p.dt} — ${p.hr}</span>
+        <span class="bdg g">REGISTRADO</span>
+      </div>
+      <div style="font-size:.78rem;color:var(--dim)">Passou: <strong style="color:var(--silver)">${p.passou}</strong> → <strong style="color:var(--blue)">${p.vigilante}</strong></div>
+      ${p.arm?`<div style="font-size:.76rem;color:var(--dim);margin-top:.2rem">Arma: <strong style="color:var(--silver)">${p.arm}</strong> Nº ${p.armNr||'—'} | Mun: <strong style="color:var(--ok)">${p.mun||0}</strong></div>`:''}
+      ${p.materiais.length?`<div style="font-size:.73rem;color:var(--ok);margin-top:.25rem">✓ ${p.materiais.join(' · ')}</div>`:''}
+      ${p.obs?`<div style="font-size:.75rem;color:var(--warn);margin-top:.25rem;font-style:italic">"${p.obs}"</div>`:''}
+    </div>`).join('');
+}
+
+function limparPassagem(){
+  ['ps-passou','ps-arm-nr','ps-mun','ps-placa','ps-km','ps-obs'].forEach(id=>{const e=byId(id);if(e)e.value='';});
+  byId('ps-arm').value='';byId('ps-arm-cond').value='Perfeita — sem avarias';byId('ps-colete').value='Sim — boas condições';byId('ps-vei').value='Sem veículo no posto';
+  document.querySelectorAll('.mat-item').forEach(m=>m.classList.remove('on'));
+  document.querySelectorAll('#ck-posto .ck-item').forEach(c=>c.classList.remove('on'));
+  preencherDT();
+}
+
+// =====================================================
+// OCORRÊNCIA
+// =====================================================
+function regOcorr(modo){
+  const tipo=byId('oc-tipo').value,local=byId('oc-local').value.trim(),desc=byId('oc-desc').value.trim();
+  if(!tipo){toast('Selecione o tipo','err');return;}
+  if(!desc){toast('Descreva o que aconteceu','err');return;}
+  const prov=byId('oc-prov').value.trim(),env=byId('oc-env').value.trim(),autor=byId('oc-autor').value,bo=byId('oc-bo').value.trim();
+  const urgSel=document.querySelector('.urg-btn.sel');
+  const urg=urgSel?.dataset?.nivel||'media';
+  const reg={id:Date.now(),tipo,local,desc,prov,env,autor,bo,urg,vigilante:DB.user.nome,posto:DB.user.posto,hora:now(),data:hoje(),urgente:modo==='urgente'};
+  DB.ocorrencias.push(reg);
+  const ico={baixa:'🟢',media:'🟡',alta:'🟠',critica:'🔴'};
+  const cat=urg==='critica'||urg==='alta'?'focorr':'fronda';
+  pushFeed(cat,ico[urg]||'🚨',`OCORRÊNCIA ${urg.toUpperCase()}: ${tipo}${local?' — '+local:''}`,DB.user.posto,'ocorrencia');
+  limparOcorrencia();
+  renderOcorrs();
+  atualizarBadgeOcorr();
+  atualizarMapaStats();
+  if(modo==='urgente'||urg==='critica')toast('⚡ SUPERVISOR NOTIFICADO!','wn');
+  else toast('✓ Ocorrência registrada!');
+}
+
+function renderOcorrs(){
+  const el=byId('lista-oc');
+  if(!DB.ocorrencias.length){el.innerHTML='<div class="empty"><div class="ei">📋</div><p>Nenhuma ocorrência</p></div>';return;}
+  const cm={baixa:'g',media:'y',alta:'o',critica:'r'};
+  el.innerHTML=DB.ocorrencias.slice().reverse().map(o=>`
+    <div style="border:1px solid var(--b2);padding:.9rem;margin-bottom:.6rem;border-left:3px solid ${o.urg==='critica'?'var(--danger)':o.urg==='alta'?'var(--orange)':o.urg==='media'?'var(--warn)':'var(--ok)'}">
+      <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:.3rem;margin-bottom:.35rem">
+        <span style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--silver2)">${o.tipo}</span>
+        <span class="bdg ${cm[o.urg]||'b'}">${o.urg?.toUpperCase()}</span>
+      </div>
+      <div style="font-size:.75rem;color:var(--dim)">📍 ${o.local||o.posto} · 🕐 ${o.hora}</div>
+      <div style="font-size:.8rem;color:var(--silver);margin-top:.25rem;line-height:1.4">${o.desc}</div>
+      ${o.prov?`<div style="font-size:.74rem;color:var(--blue);margin-top:.25rem">→ ${o.prov}</div>`:''}
+    </div>`).join('');
+}
+
+function limparOcorrencia(){
+  ['oc-tipo','oc-local','oc-desc','oc-prov','oc-env','oc-bo'].forEach(id=>{const e=byId(id);if(e)e.value='';});
+  byId('oc-autor').value='Nenhuma acionada';
+  document.querySelectorAll('.urg-btn').forEach(b=>b.classList.remove('sel'));
+}
+
+function atualizarBadgeOcorr(){
+  const n=DB.ocorrencias.length;const b=byId('vg-oc-n');
+  if(b){b.textContent=n;b.style.display=n?'inline':'none';}
+}
+
+// =====================================================
+// RONDA
+// =====================================================
+function iniciarRonda(){
+  DB.rondaAtiva=true;DB.rondaInicio=Date.now();
+  byId('rc').className='ronda-circ emronda';
+  byId('rc-ico').textContent='🚶';byId('rc-lbl').textContent='EM RONDA';byId('rc-lbl').style.color='var(--warn)';
+  byId('rc-timer').className='ronda-timer w';byId('rc-sub').textContent='Ronda em andamento...';
+  byId('btn-ir').style.display='none';byId('btn-vt').style.display='';
+  DB.rondaInt=setInterval(()=>{
+    const e=Math.floor((Date.now()-DB.rondaInicio)/1000);
+    const t=byId('rc-timer');if(t)t.textContent=`${String(Math.floor(e/3600)).padStart(2,'0')}:${String(Math.floor((e%3600)/60)).padStart(2,'0')}:${String(e%60).padStart(2,'0')}`;
+    // Move dot no mapa
+    moverDot();
+  },1000);
+  atualizarDot('emronda');
+  pushFeed('fronda','🚶',`${DB.user.nome} SAIU EM RONDA`,DB.user.posto,'ronda');
+  toast('Ronda iniciada!','wn');
+}
+
+function finalizarRonda(){
+  if(!DB.rondaAtiva)return;
+  clearInterval(DB.rondaInt);
+  const dur=Math.floor((Date.now()-DB.rondaInicio)/1000);
+  const min=Math.floor(dur/60),sec=dur%60;
+  const pontos=[...document.querySelectorAll('#ck-ronda .ck-item.on')].map(c=>c.textContent.trim());
+  const obs=byId('ronda-obs').value.trim();
+  DB.rondas.push({id:Date.now(),inicio:new Date(DB.rondaInicio).toLocaleTimeString('pt-BR'),fim:now(),dur:`${min}min ${sec}s`,durSec:dur,pontos,obs,vigilante:DB.user.nome,posto:DB.user.posto,data:hoje()});
+  DB.rondaAtiva=false;
+  byId('rc').className='ronda-circ noposto';byId('rc-ico').textContent='🏠';
+  byId('rc-lbl').textContent='NO POSTO';byId('rc-lbl').style.color='var(--ok)';
+  byId('rc-timer').className='ronda-timer g';byId('rc-timer').textContent='00:00:00';
+  byId('rc-sub').textContent=`Última ronda: ${min}min ${sec}s`;
+  byId('btn-ir').style.display='';byId('btn-vt').style.display='none';
+  document.querySelectorAll('#ck-ronda .ck-item').forEach(c=>c.classList.remove('on'));
+  byId('ronda-obs').value='';
+  // volta dot ao posto
+  DB.mapaPos={x:50,y:50};atualizarDot('noposto');
+  // Adiciona ponto final da trilha
+  DB.mapaTrilha.push({x:50,y:50,t:now()});
+  atualizarTrilha();
+  pushFeed('fnorm','✅',`${DB.user.nome} VOLTOU AO POSTO — ${min}min | ${pontos.length} pontos`,DB.user.posto,'ronda');
+  renderRondas();
+  atualizarMapaStats();
+  toast(`✓ Ronda: ${min}min ${sec}s`);
+}
+
+function renderRondas(){
+  const el=byId('lista-rondas');
+  if(!DB.rondas.length){el.innerHTML='<div class="empty"><div class="ei">🚶</div><p>Nenhuma ronda</p></div>';return;}
+  el.innerHTML=DB.rondas.slice().reverse().map(r=>`
+    <div style="border:1px solid var(--b2);padding:.9rem;margin-bottom:.6rem;border-left:3px solid var(--warn)">
+      <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:.3rem">
+        <span style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--warn)">🚶 ${r.inicio} → ${r.fim}</span>
+        <span class="bdg y">${r.dur}</span>
+      </div>
+      <div style="font-size:.74rem;color:var(--dim);margin-top:.2rem">📍 ${r.posto} · ${r.data}</div>
+      ${r.pontos.length?`<div style="font-size:.72rem;color:var(--ok);margin-top:.2rem">✓ ${r.pontos.join(' · ')}</div>`:''}
+      ${r.obs?`<div style="font-size:.76rem;color:var(--silver);margin-top:.2rem">${r.obs}</div>`:''}
+    </div>`).join('');
+}
+
+// =====================================================
+// MAPA
+// =====================================================
+function iniciarMapa(){
+  const p=DB.user.posto.split('—')[0].trim();
+  const pls=['mapa-label','mapa-posto-label','mapa-sv-posto'];
+  pls.forEach(id=>{const e=byId(id);if(e)e.textContent=p;});
+  atualizarMapaStats();
+  setInterval(()=>{
+    const clks=['mapa-clock','mapa-sv-clock'];
+    clks.forEach(id=>{const e=byId(id);if(e)e.textContent=new Date().toLocaleTimeString('pt-BR');});
+  },1000);
+}
+
+function moverDot(){
+  if(!DB.rondaAtiva)return;
+  // Movimento simulado — passeio aleatório pelo mapa
+  const dx=(Math.random()-0.5)*6;
+  const dy=(Math.random()-0.5)*6;
+  DB.mapaPos.x=Math.max(10,Math.min(90,DB.mapaPos.x+dx));
+  DB.mapaPos.y=Math.max(10,Math.min(90,DB.mapaPos.y+dy));
+  // Registra na trilha a cada 5s
+  if(Math.random()<0.2){
+    DB.mapaTrilha.push({x:DB.mapaPos.x,y:DB.mapaPos.y,t:now()});
+    if(DB.mapaTrilha.length>30)DB.mapaTrilha.shift();
+    atualizarTrilha();
+  }
+  atualizarDot(DB.panicAtivo?'panico':'emronda');
+}
+
+function atualizarDot(status){
+  const dots=['vg-dot','sv-dot'];
+  dots.forEach(id=>{
+    const el=byId(id);if(!el)return;
+    el.style.left=DB.mapaPos.x+'%';
+    el.style.top=DB.mapaPos.y+'%';
+    el.className='vg-dot '+status;
+  });
+}
+
+function atualizarTrilha(){
+  const ids=['mapa-trilha','mapa-sv-trilha'];
+  ids.forEach(id=>{
+    const el=byId(id);if(!el)return;
+    el.innerHTML=DB.mapaTrilha.map(p=>`<div class="trilha-ponto" style="left:${p.x}%;top:${p.y}%"></div>`).join('');
+  });
+}
+
+function limparTrilha(){DB.mapaTrilha=[];atualizarTrilha();toast('Trilha limpa!');}
+
+function atualizarMapaVG(){
+  atualizarMapaStats();
+  atualizarTrilha();
+}
+
+function atualizarMapaStats(){
+  const status=DB.panicAtivo?'🆘 PÂNICO':DB.rondaAtiva?'🚶 EM RONDA':'🏠 NO POSTO';
+  const cor=DB.panicAtivo?'var(--panico)':DB.rondaAtiva?'var(--warn)':'var(--ok)';
+  ['mapa-status-txt','sv-status-mapa'].forEach(id=>{
+    const e=byId(id);if(e){e.textContent=status;e.style.color=cor;}
+  });
+  const nr=DB.rondas.length;
+  ['mapa-n-rondas','sv-rondas-mapa'].forEach(id=>{const e=byId(id);if(e)e.textContent=nr;});
+  const no=DB.ocorrencias.length;
+  ['mapa-n-ocorr','sv-ocorr-mapa'].forEach(id=>{const e=byId(id);if(e)e.textContent=no;});
+  if(DB.rondas.length){
+    const ult=DB.rondas[DB.rondas.length-1];
+    const e=byId('mapa-ultima-ronda');if(e)e.textContent=ult.inicio+' ('+ult.dur+')';
+  }
+}
+
+// =====================================================
+// PÂNICO
+// =====================================================
+function abrirPanic(){
+  if(DB.panicAtivo){toast('Pânico já ativo! Use CANCELAR para desligar.','wn');return;}
+  byId('panic-modal').classList.add('open');
+  panicTipoSel='';
+}
+function fecharPanic(){byId('panic-modal').classList.remove('open');panicTipoSel='';document.querySelectorAll('.pt').forEach(t=>t.classList.remove('sel'));}
+function selPanic(el,tipo){document.querySelectorAll('.pt').forEach(t=>t.classList.remove('sel'));el.classList.add('sel');panicTipoSel=tipo;}
+
+function confirmarPanico(){
+  if(!panicTipoSel){toast('Selecione o tipo de emergência','err');return;}
+  const reg={id:Date.now(),tipo:panicTipoSel,vigilante:DB.user.nome,posto:DB.user.posto,hora:now(),data:hoje(),atendido:false};
+  DB.panicos.push(reg);DB.panicAtivo=true;DB.panicTipo=panicTipoSel;
+  fecharPanic();
+
+  // Ativa visual do botão e banner
+  byId('panic-fab').classList.add('ativo');
+  byId('panic-ativo-painel').classList.add('show');
+  byId('panic-tipo-label').textContent='Tipo: '+panicTipoSel;
+
+  // Contador de tempo do pânico
+  DB.panicSegundos=0;
+  DB.panicInt=setInterval(()=>{
+    DB.panicSegundos++;
+    const m=Math.floor(DB.panicSegundos/60),s=DB.panicSegundos%60;
+    const e=byId('panic-cd');if(e)e.textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  },1000);
+
+  atualizarDot('panico');
+  pushFeed('fpanic','🆘',`🆘🆘 PÂNICO — ${panicTipoSel.toUpperCase()} — ${DB.user.nome} — ${DB.user.posto}`,DB.user.posto,'panico');
+  notificarSup(reg);
+  renderPanicos();
+  atualizarMapaStats();
+  toast('🆘 ALERTA ENVIADO!','panic');
+}
+
+function cancelarPanico(){
+  if(!DB.panicAtivo)return;
+  clearInterval(DB.panicInt);
+  DB.panicAtivo=false;
+  byId('panic-fab').classList.remove('ativo');
+  byId('panic-ativo-painel').classList.remove('show');
+  byId('panic-cd').textContent='00:00';
+  if(DB.panicos.length)DB.panicos[DB.panicos.length-1].cancelado=true;
+  atualizarDot(DB.rondaAtiva?'emronda':'noposto');
+  pushFeed('fnorm','✅',`Alerta de pânico CANCELADO — Falso alarme ou situação controlada`,DB.user.posto,'panico');
+  renderPanicos();
+  atualizarMapaStats();
+  toast('Pânico cancelado — situação encerrada');
+}
+
+function notificarSup(reg){
+  const a=byId('sup-panic-alerta'),d=byId('sup-panic-det');
+  if(!a)return;
+  a.style.display='';
+  d.innerHTML=`TIPO: ${reg.tipo}<br>VIGILANTE: ${reg.vigilante}<br>POSTO: ${reg.posto}<br>HORA: ${reg.hora} — ${reg.data}`;
+  const n=byId('sup-pan-n');if(n){n.textContent=DB.panicos.length;n.style.display='inline';}
+}
+
+function atenderPanico(){
+  byId('sup-panic-alerta').style.display='none';
+  if(DB.panicos.length)DB.panicos[DB.panicos.length-1].atendido=true;
+  pushFeed('fnorm','✅',`Pânico ATENDIDO pelo supervisor`,DB.user.posto,'panico');
+  renderPanicos();
+  toast('✓ Atendimento confirmado');
+}
+
+function renderPanicos(){
+  const el=byId('lista-panicos');if(!el)return;
+  if(!DB.panicos.length){el.innerHTML='<div class="empty"><div class="ei">🆘</div><p>Nenhum alerta</p></div>';return;}
+  el.innerHTML=DB.panicos.slice().reverse().map(p=>`
+    <div style="border:2px solid ${p.atendido||p.cancelado?'var(--b2)':'var(--panico)'};padding:.9rem;margin-bottom:.6rem;background:${p.atendido||p.cancelado?'transparent':'rgba(255,0,51,.05)'}">
+      <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:.3rem;margin-bottom:.35rem">
+        <span style="font-family:'Orbitron',monospace;font-size:.7rem;color:${p.atendido||p.cancelado?'var(--dim)':'var(--panico)'}">${p.tipo.toUpperCase()}</span>
+        <span class="bdg ${p.cancelado?'y':p.atendido?'g':'r'}">${p.cancelado?'CANCELADO':p.atendido?'ATENDIDO':'ATIVO'}</span>
+      </div>
+      <div style="font-size:.75rem;color:var(--dim)">👮 ${p.vigilante} · 📍 ${p.posto} · 🕐 ${p.hora}</div>
+    </div>`).join('');
+}
+
+// =====================================================
+// LIVRO
+// =====================================================
+function atualizarLivro(){
+  const el=byId('livro-corpo'),hd=byId('livro-header');
+  const todos=[
+    ...DB.passagens.map(p=>({hora:p.hr,tipo:'PASSAGEM DE SERVIÇO',ico:'📋',cor:'var(--blue)',det:`De: ${p.passou} → Para: ${p.vigilante}${p.arm?' | Arma: '+p.arm+' Nº '+p.armNr+' ('+p.mun+' mun.)':''}${p.materiais.length?' | '+p.materiais.join(', '):''}${p.obs?' | OBS: '+p.obs:''}`,vg:p.vigilante})),
+    ...DB.rondas.map(r=>({hora:r.inicio,tipo:'RONDA',ico:'🚶',cor:'var(--warn)',det:`Duração: ${r.dur}${r.pontos.length?' | Pontos: '+r.pontos.join(', '):''}${r.obs?' | '+r.obs:''}`,vg:r.vigilante})),
+    ...DB.ocorrencias.map(o=>({hora:o.hora,tipo:`OCORRÊNCIA — ${o.urg?.toUpperCase()} — ${o.tipo}`,ico:o.urg==='critica'?'🔴':o.urg==='alta'?'🟠':'🟡',cor:o.urg==='critica'?'var(--danger)':'var(--warn)',det:`${o.desc}${o.local?' | Local: '+o.local:''}${o.prov?' | Providências: '+o.prov:''}${o.autor!=='Nenhuma acionada'?' | Acionado: '+o.autor:''}${o.bo?' | BO: '+o.bo:''}`,vg:o.vigilante})),
+    ...DB.panicos.map(p=>({hora:p.hora,tipo:`🆘 ALERTA PÂNICO — ${p.tipo}`,ico:'🆘',cor:'var(--panico)',det:`Vigilante: ${p.vigilante} | Status: ${p.cancelado?'Cancelado':p.atendido?'Atendido':'Pendente'}`,vg:p.vigilante})),
+  ];
+  const ini=DB.plantaoInicio||new Date();
+  if(!todos.length){hd.textContent='[ LIVRO VAZIO — REGISTRE A PASSAGEM PARA INICIAR ]';el.innerHTML='';return;}
+  hd.textContent=`LIVRO DE OCORRÊNCIAS DIGITAL\n${DB.user.posto.toUpperCase()}\nVigilante: ${DB.user.nome}${DB.user.mat?' — Mat. '+DB.user.mat:''} | Turno: ${DB.user.turno}\nAbertura: ${ini.toLocaleString('pt-BR')} | Atualizado: ${ts()}`;
+  todos.sort((a,b)=>a.hora>b.hora?1:-1);
+  el.innerHTML=todos.map(r=>`
+    <div style="display:flex;gap:8px;padding:9px;border-bottom:1px solid var(--border)">
+      <div style="font-size:1rem;flex-shrink:0">${r.ico}</div>
+      <div style="flex:1">
+        <div style="font-family:'Orbitron',monospace;font-size:.68rem;color:${r.cor};letter-spacing:1px">${r.tipo}</div>
+        <div style="font-size:.78rem;color:var(--silver);margin-top:2px;line-height:1.4">${r.det}</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:.55rem;color:var(--dim);margin-top:2px">🕐 ${r.hora} · 👮 ${r.vg}</div>
+      </div>
+    </div>`).join('');
+}
+
+function encerrarPlantao(){
+  atualizarLivro();
+  exportarPDF();
+  toast('🔒 Plantão encerrado — PDF gerado!');
+}
+
+// =====================================================
+// EXPORTAR PDF
+// =====================================================
+function exportarPDF(){
+  if(typeof window.jspdf==='undefined'&&typeof jspdf==='undefined'){
+    toast('Biblioteca PDF carregando... tente novamente','wn');return;
+  }
+  const {jsPDF}=window.jspdf||jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const W=210,m=15;
+  let y=m;
+  const azul=[0,136,221],preto=[10,20,30],cinza=[80,100,120],verde=[0,180,100],vermelho=[220,40,70],amarelo=[200,160,0];
+
+  function ln(h=5){y+=h;}
+  function linha(){doc.setDrawColor(...cinza);doc.setLineWidth(0.3);doc.line(m,y,W-m,y);ln(4);}
+  function titulo(txt,cor=azul){doc.setFont('helvetica','bold');doc.setFontSize(14);doc.setTextColor(...cor);doc.text(txt,m,y);ln(7);}
+  function subtit(txt){doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...azul);doc.text(txt,m,y);ln(5);}
+  function txt(label,valor,indent=0){
+    doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(...cinza);doc.text(label,m+indent,y);
+    doc.setFont('helvetica','normal');doc.setTextColor(...preto);doc.text(String(valor||'—'),m+indent+32,y);ln(5);
+  }
+  function txtFull(conteudo,cor=preto){
+    doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...cor);
+    const linhas=doc.splitTextToSize(conteudo,W-m*2);
+    doc.text(linhas,m,y);ln(linhas.length*4.5);
+  }
+  function newPage(){doc.addPage();y=m;}
+  function checkPage(h=20){if(y+h>285)newPage();}
+
+  // CABEÇALHO
+  doc.setFillColor(4,7,15);doc.rect(0,0,W,28,'F');
+  doc.setFont('helvetica','bold');doc.setFontSize(18);doc.setTextColor(220,240,255);doc.text('VIGILANTEX PRO',m,14);
+  doc.setFontSize(9);doc.setTextColor(...azul);doc.text('RELATÓRIO OFICIAL DE PLANTÃO',m,21);
+  doc.setFontSize(8);doc.setTextColor(100,150,180);doc.text('v2026 — Sistema de Gestão de Segurança Patrimonial',m,26);
+  y=36;
+
+  // DADOS DO PLANTÃO
+  doc.setFillColor(11,18,37);doc.rect(m-2,y-4,W-m*2+4,36,'F');
+  doc.setDrawColor(...azul);doc.setLineWidth(0.5);doc.rect(m-2,y-4,W-m*2+4,36,'S');
+  subtit('IDENTIFICAÇÃO DO PLANTÃO');
+  txt('Posto:',DB.user.posto);
+  txt('Vigilante:',DB.user.nome+(DB.user.mat?' — Mat. '+DB.user.mat:''));
+  txt('Turno:',DB.user.turno);
+  txt('Início:',DB.plantaoInicio?DB.plantaoInicio.toLocaleString('pt-BR'):'—');
+  txt('Gerado em:',ts());
+  y+=2;linha();
+
+  // RESUMO KPIs
+  subtit('RESUMO DO PLANTÃO');
+  const ks=[
+    ['Passagens de Serviço',DB.passagens.length,azul],
+    ['Rondas Realizadas',DB.rondas.length,verde],
+    ['Ocorrências',DB.ocorrencias.length,vermelho],
+    ['Alertas de Pânico',DB.panicos.length,vermelho],
+  ];
+  const kw=42;
+  ks.forEach((k,i)=>{
+    const kx=m+i*kw;
+    doc.setFillColor(9,15,28);doc.rect(kx,y,kw-2,16,'F');
+    doc.setFont('helvetica','bold');doc.setFontSize(16);doc.setTextColor(...k[2]);doc.text(String(k[1]),kx+4,y+11);
+    doc.setFont('helvetica','normal');doc.setFontSize(6);doc.setTextColor(...cinza);doc.text(k[0],kx+4,y+15);
+  });
+  y+=22;linha();
+
+  // PASSAGENS
+  if(DB.passagens.length){
+    checkPage(20);subtit('PASSAGENS DE SERVIÇO');
+    DB.passagens.forEach((p,i)=>{
+      checkPage(35);
+      doc.setFillColor(9,15,28);doc.rect(m-2,y-3,W-m*2+4,1,'F');
+      doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(...azul);doc.text(`[${String(i+1).padStart(2,'0')}] ${p.dt} — ${p.hr}`,m,y);ln(5);
+      txt('Passou:',p.passou);
+      txt('Recebeu:',p.vigilante);
+      if(p.arm)txt('Armamento:',`${p.arm} Nº ${p.armNr||'—'} | Munição: ${p.mun||0}`);
+      if(p.colete)txt('Colete:',p.colete);
+      if(p.materiais.length)txt('Materiais:',p.materiais.join(', '));
+      if(p.obs){doc.setFontSize(8);doc.setTextColor(...amarelo);txtFull('OBS: '+p.obs,amarelo);}
+      ln(2);
+    });
+    linha();
+  }
+
+  // RONDAS
+  if(DB.rondas.length){
+    checkPage(20);subtit('HISTÓRICO DE RONDAS');
+    DB.rondas.forEach((r,i)=>{
+      checkPage(25);
+      doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(...[255,187,0]);doc.text(`[${String(i+1).padStart(2,'0')}] RONDA — ${r.inicio} → ${r.fim} (${r.dur})`,m,y);ln(5);
+      txt('Data:',r.data);
+      if(r.pontos.length)txt('Pontos verificados:',r.pontos.join(', '));
+      if(r.obs)txtFull('Obs: '+r.obs,cinza);
+      ln(2);
+    });
+    linha();
+  }
+
+  // OCORRÊNCIAS
+  if(DB.ocorrencias.length){
+    checkPage(20);subtit('OCORRÊNCIAS REGISTRADAS');
+    const urgCores={baixa:verde,media:amarelo,alta:[255,119,0],critica:vermelho};
+    DB.ocorrencias.forEach((o,i)=>{
+      checkPage(40);
+      const c=urgCores[o.urg]||azul;
+      doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(...c);doc.text(`[${String(i+1).padStart(2,'0')}] ${o.urg?.toUpperCase()} — ${o.tipo} — ${o.hora}`,m,y);ln(5);
+      txt('Local:',o.local||'—');
+      doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(...cinza);doc.text('Descrição:',m,y);ln(5);
+      txtFull(o.desc||'—');
+      if(o.prov){doc.setTextColor(...azul);txtFull('Providências: '+o.prov,azul);}
+      if(o.env)txt('Envolvidos:',o.env);
+      if(o.autor!=='Nenhuma acionada')txt('Autoridade:',o.autor+(o.bo?' | BO: '+o.bo:''));
+      ln(2);
+    });
+    linha();
+  }
+
+  // PÂNICOS
+  if(DB.panicos.length){
+    checkPage(20);subtit('ALERTAS DE PÂNICO');
+    DB.panicos.forEach((p,i)=>{
+      checkPage(20);
+      const c=p.cancelado?cinza:p.atendido?verde:vermelho;
+      doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(...c);doc.text(`[${String(i+1).padStart(2,'0')}] ${p.tipo.toUpperCase()} — ${p.hora}`,m,y);ln(5);
+      txt('Vigilante:',p.vigilante);txt('Posto:',p.posto);
+      txt('Status:',p.cancelado?'CANCELADO (falso alarme)':p.atendido?'ATENDIDO':'PENDENTE');
+      ln(2);
+    });
+    linha();
+  }
+
+  // TERMO DE ENCERRAMENTO
+  checkPage(40);
+  doc.setFillColor(9,15,28);doc.rect(m-2,y-4,W-m*2+4,45,'F');
+  doc.setDrawColor(...azul);doc.setLineWidth(0.3);doc.rect(m-2,y-4,W-m*2+4,45,'S');
+  subtit('TERMO DE ENCERRAMENTO');
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...preto);
+  const termo=`O presente relatório contém os registros do plantão de segurança patrimonial, sendo gerado eletronicamente pelo sistema VIGILANTEX PRO em ${ts()}, contendo ${DB.passagens.length} passagem(ns), ${DB.rondas.length} ronda(s), ${DB.ocorrencias.length} ocorrência(s) e ${DB.panicos.length} alerta(s) de pânico.`;
+  const tls=doc.splitTextToSize(termo,W-m*2);doc.text(tls,m,y);y+=tls.length*5+4;
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...cinza);
+  doc.text('Assinatura do Vigilante: _______________________________',m,y);ln(8);
+  doc.text('Assinatura do Supervisor/Gestor: _______________________',m,y);ln(8);
+
+  // RODAPÉ
+  const pages=doc.getNumberOfPages();
+  for(let i=1;i<=pages;i++){
+    doc.setPage(i);
+    doc.setFont('helvetica','normal');doc.setFontSize(6);doc.setTextColor(...cinza);
+    doc.text(`VIGILANTEX PRO — ${DB.user.posto} — ${hoje()} — Página ${i}/${pages}`,m,293);
+    doc.setDrawColor(...[20,36,60]);doc.setLineWidth(0.3);doc.line(m,290,W-m,290);
+  }
+
+  const fname=`Relatorio_Plantao_${hoje().replace(/\//g,'-')}_${DB.user.nome.replace(/ /g,'_')}.pdf`;
+  doc.save(fname);
+  toast('📄 PDF gerado com sucesso!');
+}
+
+// =====================================================
+// REINICIAR
+// =====================================================
+function abrirReiniciar(){byId('modal-reiniciar').classList.add('open');}
+function fecharReiniciar(){byId('modal-reiniciar').classList.remove('open');}
+function confirmarReiniciar(){
+  if(DB.rondaAtiva)finalizarRonda();
+  if(DB.panicAtivo)cancelarPanico();
+  DB.passagens=[];DB.ocorrencias=[];DB.rondas=[];DB.panicos=[];DB.feed=[];
+  DB.rondaAtiva=false;DB.panicAtivo=false;DB.plantaoInicio=new Date();
+  DB.mapaPos={x:50,y:50};DB.mapaTrilha=[];
+  atualizarTrilha();atualizarDot('noposto');
+  byId('hist-pas-card').style.display='none';
+  byId('lista-pas').innerHTML='';
+  byId('lista-oc').innerHTML='<div class="empty"><div class="ei">📋</div><p>Nenhuma ocorrência</p></div>';
+  byId('lista-rondas').innerHTML='<div class="empty"><div class="ei">🚶</div><p>Nenhuma ronda</p></div>';
+  byId('lista-panicos').innerHTML='<div class="empty"><div class="ei">🆘</div><p>Nenhum alerta</p></div>';
+  byId('livro-header').textContent='[ LIVRO VAZIO — REGISTRE A PASSAGEM PARA INICIAR ]';
+  byId('livro-corpo').innerHTML='';
+  byId('vg-oc-n').style.display='none';
+  atualizarMapaStats();
+  limparPassagem();limparOcorrencia();
+  pushFeed('fnorm','🔄',`Plantão reiniciado — ${DB.user.nome}`,DB.user.posto,'passagem');
+  fecharReiniciar();
+  toast('✓ Plantão reiniciado com sucesso!');
+}
+
+// =====================================================
+// SUPERVISOR
+// =====================================================
+function pushFeed(cls,ico,txt,posto,cat){
+  DB.feed.unshift({cls,ico,txt,posto,hora:now(),vg:DB.user.nome,cat,id:Date.now()});
+  if(DB.feed.length>60)DB.feed.pop();
+}
+function atualizarSup(){
+  renderFeedSup();renderPostos();renderOcorrSup();renderPanicos();atualizarKPIs();
+  atualizarTrilha();atualizarDot(DB.panicAtivo?'panico':DB.rondaAtiva?'emronda':'noposto');
+  atualizarMapaStats();
+  byId('r-pas').textContent=DB.passagens.length;byId('r-ron').textContent=DB.rondas.length;
+  byId('r-oc').textContent=DB.ocorrencias.length;byId('r-pan').textContent=DB.panicos.length;
+}
+function atualizarKPIs(){
+  byId('kp-postos').textContent=DB.passagens.length>0?1:0;
+  byId('kp-noposto').textContent=DB.rondaAtiva?0:(DB.passagens.length>0?1:0);
+  byId('kp-ronda').textContent=DB.rondaAtiva?1:0;
+  byId('kp-ocorr').textContent=DB.ocorrencias.length;
+  byId('sup-oc-n').textContent=DB.ocorrencias.length;
+}
+function renderFeedSup(){
+  ['sv-feed','sv-log-full'].forEach(id=>{
+    const el=byId(id);if(!el)return;
+    if(!DB.feed.length){el.innerHTML='<div class="empty"><div class="ei">📡</div><p>Aguardando...</p></div>';return;}
+    el.innerHTML=DB.feed.map(f=>`
+      <div class="fi-item ${f.cls}">
+        <div class="fi-ico">${f.ico}</div>
+        <div class="fi-body">
+          <div class="fi-txt">${f.txt}</div>
+          <div class="fi-meta"><span class="fi-tm">${f.hora}</span><span class="fi-who">${f.vg}</span><span class="fi-ps">${f.posto}</span></div>
+        </div>
+      </div>`).join('');
+  });
+}
+function renderPostos(){
+  const el=byId('lista-postos');if(!el)return;
+  if(!DB.passagens.length){el.innerHTML='<div class="empty"><div class="ei">📍</div><p>Nenhum posto ativo</p></div>';return;}
+  const pan=DB.panicAtivo,ult=DB.passagens[DB.passagens.length-1];
+  el.innerHTML=`<div class="posto-card ${pan?'panic-posto':''}">
+    <div><div class="pc-nome">${DB.user.posto}</div><div class="pc-vg">👮 ${DB.user.nome} · ${DB.user.turno}</div>${ult?`<div style="font-size:.7rem;color:var(--dim);margin-top:2px">Passagem: ${ult.hr} · ${ult.dt}</div>`:''}</div>
+    <div class="pc-stats">
+      <div class="pc-sv"><div class="pc-sv-v" style="color:${DB.rondaAtiva?'var(--warn)':'var(--ok)'}">${DB.rondaAtiva?'🚶':'🏠'}</div><div class="pc-sv-l">${DB.rondaAtiva?'RONDA':'POSTO'}</div></div>
+      <div class="pc-sv"><div class="pc-sv-v">${DB.rondas.length}</div><div class="pc-sv-l">Rondas</div></div>
+      <div class="pc-sv"><div class="pc-sv-v" style="color:${DB.ocorrencias.length?'var(--danger)':'var(--ok)'}">${DB.ocorrencias.length}</div><div class="pc-sv-l">Ocorr.</div></div>
+    </div>
+    <span class="bdg ${pan?'panic':DB.rondaAtiva?'y':'g'}">${pan?'PÂNICO!':DB.rondaAtiva?'RONDA':'ATIVO'}</span>
+  </div>`;
+}
+function renderOcorrSup(){
+  const el=byId('sv-lista-oc');if(!el)return;
+  if(!DB.ocorrencias.length){el.innerHTML='<div class="empty"><div class="ei">🚨</div><p>Sem ocorrências</p></div>';return;}
+  const cm={baixa:'g',media:'y',alta:'o',critica:'r'};
+  el.innerHTML=DB.ocorrencias.slice().reverse().map(o=>`
+    <div style="border:1px solid var(--b2);padding:.9rem;margin-bottom:.6rem;border-left:3px solid ${o.urg==='critica'?'var(--danger)':o.urg==='alta'?'var(--orange)':o.urg==='media'?'var(--warn)':'var(--ok)'}">
+      <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:.3rem;margin-bottom:.3rem">
+        <span style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--silver2)">${o.tipo}</span>
+        <span class="bdg ${cm[o.urg]||'b'}">${o.urg?.toUpperCase()}</span>
+      </div>
+      <div style="font-size:.73rem;color:var(--dim)">👮 ${o.vigilante} · 📍 ${o.local||o.posto} · 🕐 ${o.hora}</div>
+      <div style="font-size:.8rem;color:var(--silver);margin-top:.25rem;line-height:1.4">${o.desc}</div>
+      ${o.prov?`<div style="font-size:.73rem;color:var(--blue);margin-top:.2rem">→ ${o.prov}</div>`:''}
+    </div>`).join('');
+}
+
+// init
+pushFeed('fnorm','🖥️','Sistema VIGILANTEX PRO iniciado','Sistema','sistema');
+
+// ── INTEGRAÇÃO LIMPA COM BACKEND ─────────────────
+// Salva dados no backend SEM sobrescrever funções
+
+// Intercepta passagem
+document.addEventListener('passagem_registrada', async (e) => {
+  try { await fetch('/api/passagem', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(e.detail)}); } catch(_){}
+});
+
+// Verifica sessão uma única vez
+fetch('/api/me').then(r => {
+  if(!r.ok) window.location.href = '/login';
+}).catch(() => {}); // offline = continua normalmente
+
+// Logout vai para /login
+const _logoutOrig = logout;
+function logout(){
+  _logoutOrig();
+  fetch('/api/logout',{method:'POST'}).finally(() => { window.location.href='/login'; });
+}
+
+</script>
+</body>
+</html>
