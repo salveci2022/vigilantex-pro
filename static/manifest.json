@@ -1,0 +1,16 @@
+{
+  "name": "VIGILANTEX PRO",
+  "short_name": "VIGILANTEX",
+  "description": "Sistema de Gestão de Plantão de Segurança Patrimonial",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#04070f",
+  "theme_color": "#0088dd",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/static/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/static/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "categories": ["security", "business", "productivity"],
+  "lang": "pt-BR"
+}
